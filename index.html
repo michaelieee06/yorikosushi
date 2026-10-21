@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Yoriko Sushi — The Menu Book</title>
+<meta name="description" content="Yoriko Sushi — hand-pressed every morning. Open the book, turn a page, choose your sushi.">
+<meta name="theme-color" content="#1d2638">
+<link rel="preload" href="assets/hon-maguro.png" as="image" fetchpriority="low">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- washi / grain layers (pure CSS, no images) -->
+<div class="ambient" aria-hidden="true">
+  <div class="ambient__sun"></div>
+  <div class="ambient__grain"></div>
+</div>
+
+<a class="skip" href="#book">Skip to menu</a>
+
+<header class="topbar">
+  <div class="topbar__brand">
+    <span class="seal" aria-hidden="true">寄</span>
+    <span class="wordmark">Yoriko<em>Sushi</em></span>
+  </div>
+  <div class="topbar__actions">
+    <button class="sound" id="sound" type="button" aria-pressed="false" aria-label="Toggle page-turn sound">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path class="sound__wave" d="M16 8.5a5 5 0 0 1 0 7"/></svg>
+    </button>
+    <button class="slip-toggle" id="slipToggle" type="button" aria-expanded="false" aria-controls="slip">
+      <span>Your slip</span>
+      <span class="slip-toggle__count" id="slipToggleCount" data-empty="true">0</span>
+    </button>
+  </div>
+</header>
+
+<main class="stage" id="book">
+
+  <!-- ============ THE BOOK ============ -->
+  <div class="book-wrap" id="bookWrap">
+    <div class="book" id="bookEl" data-open="false" aria-roledescription="menu book">
+      <div class="book__shadow" aria-hidden="true"></div>
+
+      <!-- inside of the back cover: the right page of the last spread -->
+      <section class="book__board" id="bookBoard" aria-label="Thank you">
+        <div class="back__inner">
+          <span class="hanko" aria-hidden="true">承</span>
+          <p class="back__jp" lang="ja">ありがとうございます</p>
+          <p class="back__thanks">Thank you for dining with us.</p>
+          <p class="back__note">Yoriko Sushi · 2-7-11 Omotesando, Shibuya<br>Daily 11:30 – 22:00</p>
+          <button class="cover__open cover__open--ghost" type="button" id="closeBook">Close the book</button>
+        </div>
+      </section>
+
+      <!-- sheets: the cover is sheet 0, book.js appends the menu sheets after it -->
+      <div class="leaves" id="leaves">
+      <div class="leaf leaf--cover" data-sheet="0">
+        <div class="face face--front cover__face">
+          <div class="cover__pattern" aria-hidden="true"></div>
+          <div class="cover__frame">
+            <span class="cover__kicker">Online menu · 御献立</span>
+            <h1 class="cover__title" aria-label="Yoriko Sushi">
+              <span class="cover__jp">寄子寿司</span>
+              <span class="cover__romaji">Yoriko Sushi</span>
+            </h1>
+            <span class="cover__rule" aria-hidden="true"></span>
+            <span class="cover__tag">Hand-pressed, every morning</span>
+            <button class="cover__open" type="button" id="openBook">
+              Open the menu
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+            </button>
+            <span class="hanko hanko--cover" aria-hidden="true">寿</span>
+          </div>
+        </div>
+        <!-- endpaper: the left page of the first spread -->
+        <article class="face face--back leaf__page leaf__page--left endpaper">
+          <div class="endpaper__inner">
+            <p class="endpaper__jp" lang="ja">いらっしゃいませ</p>
+            <p class="endpaper__title">Welcome to Yoriko</p>
+            <p class="endpaper__text">Every piece is pressed by hand the moment you order it. Pick a dish to see it up close, then add it to your slip.</p>
+            <span class="hanko" aria-hidden="true">寄</span>
+          </div>
+        </article>
+      </div>
+      </div>
+
+      <div class="book__spine" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <!-- page controls -->
+  <nav class="pager" id="pager" aria-label="Menu pages">
+    <button class="pager__btn" id="prevPage" type="button" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <div class="pager__dots" id="dots" role="tablist" aria-label="Go to page"></div>
+    <button class="pager__btn" id="nextPage" type="button" aria-label="Next page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </nav>
+  <p class="hint" id="hint">Click an item to lift it off the page</p>
+</main>
+
+<!-- ============ ITEM VIEWER (no backdrop — dish flies forward) ============ -->
+<div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewerTitle" hidden>
+  <div class="viewer__glow" aria-hidden="true"></div>
+
+  <!-- fly layer: the PNG travels here -->
+  <div class="fly" id="fly" aria-hidden="true">
+    <img id="flyImg" alt="" draggable="false" width="560" height="560">
+  </div>
+
+  <div class="viewer__inner">
+    <div class="viewer__stage" aria-hidden="true">
+      <svg class="stage-ring" viewBox="0 0 400 400" aria-hidden="true">
+        <circle cx="200" cy="200" r="168" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 10" opacity=".45"/>
+        <circle cx="200" cy="200" r="140" fill="none" stroke="currentColor" stroke-width="1" opacity=".18"/>
+      </svg>
+      <span class="stage__caption">Selection · 御品</span>
+    </div>
+
+    <div class="chat" id="chat" aria-live="polite">
+      <button class="chat__close" id="viewerClose" type="button" aria-label="Close and return to the book">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+
+      <div class="msg msg--typing" id="msgTyping" data-step="0">
+        <div class="msg__avatar" aria-hidden="true">寄</div>
+        <div class="bubble bubble--typing"><span></span><span></span><span></span></div>
+      </div>
+
+      <div class="msg msg--meta" data-step="1">
+        <div class="msg__avatar" aria-hidden="true">寄</div>
+        <div class="bubble">
+          <div class="bubble__who">Yoriko Sushi <span>· just now</span></div>
+          <p class="bubble__jp" id="viewerJp"></p>
+          <p class="bubble__romaji" id="viewerRomaji"></p>
+        </div>
+      </div>
+
+      <div class="msg msg--head" data-step="2">
+        <h2 class="bubble bubble--head" id="viewerTitle"></h2>
+      </div>
+
+      <div class="msg msg--body" data-step="3">
+        <div class="bubble">
+          <p id="viewerBlurb"></p>
+          <ul class="chips" id="viewerTags"></ul>
+        </div>
+      </div>
+
+      <div class="msg msg--price" data-step="4">
+        <div class="bubble bubble--price">
+          <span class="price" id="viewerPrice"></span>
+          <span class="price__unit" id="viewerUnit"></span>
+        </div>
+      </div>
+
+      <div class="msg msg--cta" data-step="5">
+        <button class="buy" id="buy" type="button">
+          <span class="buy__label">Buy</span>
+          <span class="buy__ripple" aria-hidden="true"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ORDER SLIP ============ -->
+<aside class="slip" id="slip" aria-label="Your order slip" aria-hidden="true">
+  <div class="slip__head">
+    <h2>Order slip <span>御注文</span></h2>
+    <button class="slip__close" id="slipClose" type="button" aria-label="Close slip">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <ul class="slip__list" id="slipList"></ul>
+  <p class="slip__empty" id="slipEmpty">Nothing yet — turn a page and pick something.</p>
+  <div class="slip__total">
+    <span>Total</span>
+    <strong id="slipTotal">Rp 0</strong>
+  </div>
+  <button class="checkout" id="checkout" type="button" disabled>Confirm order</button>
+  <p class="slip__fine">Demo store — no payment is taken.</p>
+</aside>
+<div class="slip-scrim" id="slipScrim" hidden></div>
+
+<!-- checkout stamp -->
+<div class="stamp" id="stamp" role="status" aria-live="polite" hidden>
+  <div class="stamp__ring">
+    <svg class="stamp__mark" viewBox="0 0 120 120" aria-hidden="true">
+      <circle cx="60" cy="60" r="54" fill="none" stroke="currentColor" stroke-width="4"/>
+      <path d="M34 62 52 80 88 40" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p class="stamp__jp">承知</p>
+    <p class="stamp__en">Order received</p>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module" src="js/app.js"></script>
+<noscript><p style="padding:2rem;text-align:center">This menu book needs JavaScript. Please call +62 21 555 0117 to order.</p></noscript>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "yoriko-sushi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Yoriko Sushi — an interactive 3D menu book. Vanilla JS, no framework.",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs 5173",
+    "assets": "node tools/render-assets.mjs",
+    "shots": "node tools/shoot.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1",
+    "sharp": "^0.35.5"
+  }
+}
