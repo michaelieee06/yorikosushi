@@ -102,8 +102,9 @@
   <p class="hint" id="hint">Click an item to lift it off the page</p>
 </main>
 
-<!-- ============ ITEM VIEWER (no backdrop — dish flies forward) ============ -->
+<!-- ============ ITEM VIEWER (spotlight & 75% dark backdrop) ============ -->
 <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="viewerTitle" hidden>
+  <div class="viewer__backdrop" id="viewerBackdrop" aria-hidden="true"></div>
   <div class="viewer__glow" aria-hidden="true"></div>
 
   <!-- fly layer: the PNG travels here -->
@@ -111,8 +112,15 @@
     <img id="flyImg" alt="" draggable="false" width="560" height="560">
   </div>
 
+  <button class="viewer__close" id="viewerClose" type="button" aria-label="Close and return to the book">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  </button>
+
   <div class="viewer__inner">
     <div class="viewer__stage" aria-hidden="true">
+      <div class="stage-particles" id="stageParticles" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span><span></span>
+      </div>
       <svg class="stage-ring" viewBox="0 0 400 400" aria-hidden="true">
         <circle cx="200" cy="200" r="168" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 10" opacity=".45"/>
         <circle cx="200" cy="200" r="140" fill="none" stroke="currentColor" stroke-width="1" opacity=".18"/>
@@ -121,47 +129,64 @@
     </div>
 
     <div class="chat" id="chat" aria-live="polite">
-      <button class="chat__close" id="viewerClose" type="button" aria-label="Close and return to the book">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
-      </button>
-
-      <div class="msg msg--typing" id="msgTyping" data-step="0">
-        <div class="msg__avatar" aria-hidden="true">寄</div>
-        <div class="bubble bubble--typing"><span></span><span></span><span></span></div>
-      </div>
-
       <div class="msg msg--meta" data-step="1">
-        <div class="msg__avatar" aria-hidden="true">寄</div>
-        <div class="bubble">
-          <div class="bubble__who">Yoriko Sushi <span>· just now</span></div>
-          <p class="bubble__jp" id="viewerJp"></p>
-          <p class="bubble__romaji" id="viewerRomaji"></p>
+        <div class="bubble bubble--meta">
+          <div class="meta-avatar" aria-hidden="true">寄</div>
+          <div class="bubble__meta-content">
+            <div class="bubble__meta-top">
+              <span class="bubble__who">Yoriko Omakase Counter · 寄子寿司</span>
+              <span class="bubble__badge">御品 · Daily Selection</span>
+            </div>
+            <div class="bubble__meta-main">
+              <span class="bubble__jp" id="viewerJp"></span>
+              <span class="bubble__romaji" id="viewerRomaji"></span>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="msg msg--head" data-step="2">
-        <h2 class="bubble bubble--head" id="viewerTitle"></h2>
+        <div class="bubble bubble--head-card">
+          <span class="bubble__kicker">Selected Piece · 握り</span>
+          <h2 class="bubble--head" id="viewerTitle"></h2>
+        </div>
       </div>
 
       <div class="msg msg--body" data-step="3">
-        <div class="bubble">
-          <p id="viewerBlurb"></p>
+        <div class="bubble bubble--body-card">
+          <p class="bubble__blurb" id="viewerBlurb"></p>
+          <div class="bubble__specs">
+            <div class="spec-item">
+              <span class="spec-item__label">Serving</span>
+              <strong class="spec-item__val" id="specPortion">2 Pieces · 握り</strong>
+            </div>
+            <div class="spec-item">
+              <span class="spec-item__label">Shari (Rice)</span>
+              <strong class="spec-item__val" id="specRice">Akazu Red Vinegar · 赤酢</strong>
+            </div>
+            <div class="spec-item">
+              <span class="spec-item__label">Preparation</span>
+              <strong class="spec-item__val">Hand-pressed to Order</strong>
+            </div>
+          </div>
           <ul class="chips" id="viewerTags"></ul>
         </div>
       </div>
 
-      <div class="msg msg--price" data-step="4">
-        <div class="bubble bubble--price">
-          <span class="price" id="viewerPrice"></span>
-          <span class="price__unit" id="viewerUnit"></span>
+      <div class="msg msg--action" data-step="4">
+        <div class="bubble bubble--action-card">
+          <div class="action__price-box">
+            <span class="action__label">Price · 御代</span>
+            <div class="action__price-row">
+              <span class="price" id="viewerPrice"></span>
+              <span class="price__unit" id="viewerUnit"></span>
+            </div>
+          </div>
+          <button class="buy" id="buy" type="button">
+            <span class="buy__label">Buy</span>
+            <span class="buy__ripple" aria-hidden="true"></span>
+          </button>
         </div>
-      </div>
-
-      <div class="msg msg--cta" data-step="5">
-        <button class="buy" id="buy" type="button">
-          <span class="buy__label">Buy</span>
-          <span class="buy__ripple" aria-hidden="true"></span>
-        </button>
       </div>
     </div>
   </div>

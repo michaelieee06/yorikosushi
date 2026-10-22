@@ -54,7 +54,7 @@ for (const engineName of engines) {
     await page.waitForTimeout(1100);
     await page.screenshot({ path: `${out}/${name}-5-item.png` });
 
-    await page.click('#buy');
+    await page.click('#buy', { force: true });
     await page.waitForTimeout(400);
     await page.screenshot({ path: `${out}/${name}-6-bought.png` });
 

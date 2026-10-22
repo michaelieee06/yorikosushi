@@ -82,13 +82,27 @@ export class Viewer {
     this.card = anchor;
     this.lastFocus = document.activeElement;
 
-    // the launch box: the card's plate if we have one, else the row itself
-    const img = anchor.querySelector?.('.card__img') ?? null;
-    const from = img ? img.getBoundingClientRect() : anchor.getBoundingClientRect();
-    const src = `assets/${item.id}.png`;
-
-    // fill content first (hidden) so measurements are stable
+    // Unhide first so stage measurements and layout are accurate
+    this.node.hidden = false;
+    this.node.dataset.state = 'opening';
     this.fill(item);
+
+    // the launch box: the card's plate if we have one, else a neat square from the menu row
+    const img = anchor.querySelector?.('.card__img') ?? null;
+    let from;
+    if (img) {
+      from = img.getBoundingClientRect();
+    } else {
+      const r = anchor.getBoundingClientRect();
+      const s = Math.min(r.height * 1.6, 52);
+      from = {
+        left: r.left + 20,
+        top: r.top + r.height / 2 - s / 2,
+        width: s,
+        height: s,
+      };
+    }
+    const src = `assets/${item.id}.png`;
 
     const to = this.stageRect();
 
@@ -97,8 +111,6 @@ export class Viewer {
     this.flyImg.alt = item.name;
     this.setFlyBox(from);
 
-    this.node.hidden = false;
-    this.node.dataset.state = 'opening';
     document.body.classList.add('is-viewing');
     anchor.classList.add('is-lifted');
 
@@ -107,37 +119,77 @@ export class Viewer {
     if (this.closingEarly) return;
 
     const reduce = reduceMotion.matches;
-    const dur = reduce ? 120 : 560 * D;
+    const dur = reduce ? 120 : 660 * D;
 
-    // FLIP: from card rect -> stage rect, with a forward "lift" at the start.
-    // `to` is already a top-left box, so compare centres explicitly.
-    const tx = (to.x + to.width / 2) - (from.left + from.width / 2);
-    const ty = (to.y + to.height / 2) - (from.top + from.height / 2);
+    // FLIP: from card rect -> stage rect, with a physical arched flight
+    const cxFrom = from.left + from.width / 2;
+    const cyFrom = from.top + from.height / 2;
+    const cxTo = to.x + to.width / 2;
+    const cyTo = to.y + to.height / 2;
     const s = to.size / Math.max(1, Math.min(from.width, from.height));
+
+    const startX = from.left;
+    const startY = from.top;
+    const endX = cxTo - from.width / 2;
+    const endY = cyTo - from.height / 2;
+    const dx = endX - startX;
+    const dy = endY - startY;
 
     const frames = reduce
       ? [
-          { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
-          { transform: `translate3d(${tx}px,${ty}px,0) scale(${s})`, opacity: 1 },
+          { transform: `translate3d(${startX}px,${startY}px,0) scale(1)`, opacity: 1 },
+          { transform: `translate3d(${endX}px,${endY}px,0) scale(${s})`, opacity: 1 },
         ]
       : [
-          { transform: 'translate3d(0,0,0) scale(1) rotateZ(0deg)', opacity: 1 },
-          { transform: 'translate3d(0,-2.4vh,0) scale(1.07) rotateZ(-1.2deg)', opacity: 1, offset: 0.2 },
-          { transform: `translate3d(${tx}px,${ty}px,0) scale(${s}) rotateZ(0.5deg)`, opacity: 1, offset: 0.86 },
-          { transform: `translate3d(${tx}px,${ty}px,0) scale(${s}) rotateZ(0deg)`, opacity: 1 },
+          {
+            transform: `translate3d(${startX}px,${startY}px,0) scale(1) rotate(0deg)`,
+            filter: 'drop-shadow(0 6px 12px rgba(0,0,0,0.3))',
+            opacity: 1,
+            offset: 0,
+          },
+          {
+            transform: `translate3d(${startX + dx * 0.08}px, ${startY + dy * 0.08 - 32}px, 0) scale(1.16) rotate(-3.5deg)`,
+            filter: 'drop-shadow(0 20px 32px rgba(0,0,0,0.5))',
+            opacity: 1,
+            offset: 0.18,
+          },
+          {
+            transform: `translate3d(${startX + dx * 0.48}px, ${startY + dy * 0.44 - 18}px, 0) scale(${1 + (s - 1) * 0.65}) rotate(2deg)`,
+            filter: 'drop-shadow(0 28px 45px rgba(0,0,0,0.6))',
+            opacity: 1,
+            offset: 0.52,
+          },
+          {
+            transform: `translate3d(${startX + dx * 0.88}px, ${startY + dy * 0.88 - 3}px, 0) scale(${s * 1.04}) rotate(-0.8deg)`,
+            filter: 'drop-shadow(0 22px 35px rgba(0,0,0,0.5))',
+            opacity: 1,
+            offset: 0.82,
+          },
+          {
+            transform: `translate3d(${startX + dx * 0.98}px, ${startY + dy * 0.99}px, 0) scale(${s * 1.01}) rotate(0.2deg)`,
+            filter: 'drop-shadow(0 18px 28px rgba(0,0,0,0.45))',
+            opacity: 1,
+            offset: 0.94,
+          },
+          {
+            transform: `translate3d(${endX}px,${endY}px,0) scale(${s}) rotate(0deg)`,
+            filter: 'drop-shadow(0 16px 26px rgba(0,0,0,0.4))',
+            opacity: 1,
+            offset: 1,
+          },
         ];
 
     const anim = this.fly.animate(frames, {
       duration: dur,
-      easing: 'cubic-bezier(.16,.84,.24,1)',
+      easing: 'cubic-bezier(.22,.61,.36,1)',
       fill: 'both',
     });
 
     this.node.dataset.state = 'open';
 
     // chat lands while the dish is still travelling
-    const stagger = reduce ? 20 : 95 * D;
-    const lead = reduce ? 0 : 250 * D;
+    const stagger = reduce ? 20 : 90 * D;
+    const lead = reduce ? 0 : 220 * D;
     this.playChat(lead, stagger);
 
     try { await anim.finished; } catch { /* interrupted */ }
@@ -146,6 +198,7 @@ export class Viewer {
     // hand the flying dish over to its resting box, in this exact order
     anim.cancel();
     this.setFlyBox(to);
+    if (!reduce) this.fly.classList.add('is-floating');
   }
 
   seat(resize = false) {
@@ -180,6 +233,15 @@ export class Viewer {
     e.buy.disabled = false;
     e.buy.setAttribute('aria-label', `Buy ${item.name}, ${fmt(item.price)}`);
     e.buy.innerHTML = `<span class="buy__label">Buy — ${fmt(item.price)}</span><span class="buy__ripple" aria-hidden="true"></span>`;
+
+    const specPortion = $('#specPortion');
+    if (specPortion) {
+      specPortion.textContent = item.cat === 0 ? '2 Pieces · 握り' : (item.tags[0] || '1 Set · 御品');
+    }
+    const specRice = $('#specRice');
+    if (specRice) {
+      specRice.textContent = item.cat === 1 ? 'Ise Bay Nori · 海苔' : 'Akazu Red Vinegar · 赤酢';
+    }
   }
 
   playChat(lead, stagger) {
@@ -236,28 +298,60 @@ export class Viewer {
     this.clearTimers();
     clearTimeout(this.buyTimer);
     this.node.dataset.state = 'closing';
+    this.fly.classList.remove('is-floating');
 
     const card = this.card;
     const img = card?.querySelector('.card__img') ?? null;
     const reduce = reduceMotion.matches || immediate;
-    const dur = reduce ? 120 : 420 * D;
+    const dur = reduce ? 120 : 460 * D;
 
     // where the dish currently rests, and where it should land
     const from = this.stageRect();
     const target = img && card && document.contains(card) ? img.getBoundingClientRect() : null;
 
     if (target) {
-      const tx = target.left + target.width / 2 - (from.x + from.width / 2);
-      const ty = target.top + target.height / 2 - (from.y + from.height / 2);
+      const cxEnd = target.left + target.width / 2;
+      const cyEnd = target.top + target.height / 2;
       const s = Math.min(target.width, target.height) / from.size;
 
-      const frames = [
-        { transform: 'translate3d(0,0,0) scale(1)', opacity: 1 },
-        { transform: `translate3d(${tx * 0.15}px,${ty * 0.15}px,0) scale(${1.04})`, opacity: 1, offset: 0.25 },
-        { transform: `translate3d(${tx}px,${ty}px,0) scale(${s})`, opacity: 0.9 },
-      ];
+      const startX = from.x;
+      const startY = from.y;
+      const endX = cxEnd - from.width / 2;
+      const endY = cyEnd - from.height / 2;
+      const dx = endX - startX;
+      const dy = endY - startY;
+
+      const frames = reduce
+        ? [
+            { transform: `translate3d(${startX}px,${startY}px,0) scale(1)`, opacity: 1 },
+            { transform: `translate3d(${endX}px,${endY}px,0) scale(${s})`, opacity: 0.9 },
+          ]
+        : [
+            {
+              transform: `translate3d(${startX}px,${startY}px,0) scale(1) rotate(0deg)`,
+              filter: 'drop-shadow(0 16px 26px rgba(0,0,0,0.4))',
+              opacity: 1,
+            },
+            {
+              transform: `translate3d(${startX + dx * 0.15}px,${startY + dy * 0.15 - 14}px,0) scale(1.05) rotate(2deg)`,
+              filter: 'drop-shadow(0 24px 36px rgba(0,0,0,0.5))',
+              opacity: 1,
+              offset: 0.22,
+            },
+            {
+              transform: `translate3d(${startX + dx * 0.62}px,${startY + dy * 0.6 - 8}px,0) scale(${s * 1.1}) rotate(-1.5deg)`,
+              filter: 'drop-shadow(0 18px 26px rgba(0,0,0,0.4))',
+              opacity: 0.98,
+              offset: 0.65,
+            },
+            {
+              transform: `translate3d(${endX}px,${endY}px,0) scale(${s}) rotate(0deg)`,
+              filter: 'drop-shadow(0 6px 10px rgba(0,0,0,0.3))',
+              opacity: 0.9,
+            },
+          ];
       try {
-        await this.fly.animate(frames, { duration: dur, easing: EASE.inOut, fill: 'forwards' }).finished;
+        await this.fly.animate(frames, { duration: dur, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'forwards' }).finished;
       } catch { /* noop */ }
     } else {
       await this.fly.animate([{ opacity: 1 }, { opacity: 0 }], { duration: dur, fill: 'forwards' }).finished;

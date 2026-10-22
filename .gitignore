@@ -1,2 +1,5 @@
 node_modules/
 tools/shots/
+.firebase/
+firebase-debug.log
+*-debug.log
